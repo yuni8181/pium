@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026 대전국제기타페스티벌 | DIGF</title>
 <!-- 카카오톡 / SNS 공유 (Open Graph) 설정 -->
 <meta property="og:title" content="2026 대전국제기타페스티벌">
@@ -213,9 +213,16 @@
     var closeBtn = document.getElementById('lightboxClose');
 
     var MIN_SCALE = 1, MAX_SCALE = 4, DOUBLE_TAP_SCALE = 2.2;
-    var scale = 1, originX = 0, originY = 0;
-    var startDist = 0, startScale = 1;
-    var isPanning = false, panStartX = 0, panStartY = 0, originStartX = 0, originStartY = 0;
+    var scale = 1;
+    var translateX = 0, translateY = 0;
+
+    // 터치 트래킹 변수들
+    var activeTouches = 0;
+    var startX = 0, startY = 0;
+    var startDist = 0;
+    var startScale = 1;
+    var startTranslateX = 0, startTranslateY = 0;
+    var imagePointX = 0, imagePointY = 0;
     var lastTapTime = 0;
 
     function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
@@ -224,10 +231,10 @@
       return Math.sqrt(dx * dx + dy * dy);
     }
     function applyTransform(){
-      img.style.transform = 'translate(' + originX + 'px,' + originY + 'px) scale(' + scale + ')';
+      img.style.transform = 'translate(' + translateX + 'px,' + translateY + 'px) scale(' + scale + ')';
     }
     function resetTransform(){
-      scale = 1; originX = 0; originY = 0;
+      scale = 1; translateX = 0; translateY = 0;
       applyTransform();
     }
     function openLightbox(src, alt){
@@ -253,56 +260,123 @@
       if (e.target === overlay) closeLightbox();
     });
 
-    overlay.addEventListener('touchstart', function(e){
-      if (e.touches.length === 2) {
-        startDist = dist(e.touches[0], e.touches[1]);
+    function updateTouchState(touches) {
+      if (touches.length === 1) {
+        activeTouches = 1;
+        startX = touches[0].clientX;
+        startY = touches[0].clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      } else if (touches.length >= 2) {
+        activeTouches = 2;
+        startX = (touches[0].clientX + touches[1].clientX) / 2;
+        startY = (touches[0].clientY + touches[1].clientY) / 2;
+        startDist = dist(touches[0], touches[1]);
         startScale = scale;
-        isPanning = false;
-      } else if (e.touches.length === 1) {
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+        
+        var C_x = window.innerWidth / 2;
+        var C_y = window.innerHeight / 2;
+        imagePointX = (startX - C_x - startTranslateX) / startScale;
+        imagePointY = (startY - C_y - startTranslateY) / startScale;
+      } else {
+        activeTouches = 0;
+      }
+    }
+
+    overlay.addEventListener('touchstart', function(e){
+      // 더블 탭 확대/축소 처리
+      if (e.touches.length === 1) {
         var now = Date.now();
         if (now - lastTapTime < 300) {
           lastTapTime = 0;
-          scale > 1 ? resetTransform() : (scale = DOUBLE_TAP_SCALE, applyTransform());
+          if (scale > 1) {
+            resetTransform();
+          } else {
+            scale = DOUBLE_TAP_SCALE;
+            var tapX = e.touches[0].clientX;
+            var tapY = e.touches[0].clientY;
+            var C_x = window.innerWidth / 2;
+            var C_y = window.innerHeight / 2;
+            translateX = tapX - C_x - (tapX - C_x) * scale;
+            translateY = tapY - C_y - (tapY - C_y) * scale;
+            applyTransform();
+          }
+          updateTouchState(e.touches);
           return;
         }
         lastTapTime = now;
-
-        if (scale > 1) {
-          isPanning = true;
-          panStartX = e.touches[0].clientX;
-          panStartY = e.touches[0].clientY;
-          originStartX = originX;
-          originStartY = originY;
-        }
       }
+      updateTouchState(e.touches);
     }, { passive: true });
 
     overlay.addEventListener('touchmove', function(e){
-      if (e.touches.length === 2) {
+      if (activeTouches === 1 && scale > 1) {
         e.preventDefault();
-        var d = dist(e.touches[0], e.touches[1]);
-        scale = clamp(startScale * (d / startDist), MIN_SCALE, MAX_SCALE);
+        var touch = e.touches[0];
+        var dx = touch.clientX - startX;
+        var dy = touch.clientY - startY;
+        translateX = startTranslateX + dx;
+        translateY = startTranslateY + dy;
         applyTransform();
-      } else if (e.touches.length === 1 && isPanning) {
+      } else if (activeTouches === 2 && e.touches.length >= 2) {
         e.preventDefault();
-        originX = originStartX + (e.touches[0].clientX - panStartX);
-        originY = originStartY + (e.touches[0].clientY - panStartY);
+        var currentMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        var currentMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        var currentDist = dist(e.touches[0], e.touches[1]);
+        
+        scale = clamp(startScale * (currentDist / startDist), MIN_SCALE, MAX_SCALE);
+        
+        var C_x = window.innerWidth / 2;
+        var C_y = window.innerHeight / 2;
+        translateX = currentMidX - C_x - imagePointX * scale;
+        translateY = currentMidY - C_y - imagePointY * scale;
+        
         applyTransform();
       }
     }, { passive: false });
 
     overlay.addEventListener('touchend', function(e){
-      if (e.touches.length === 0) {
-        isPanning = false;
-        if (scale <= 1) resetTransform();
+      updateTouchState(e.touches);
+      if (activeTouches === 0) {
+        if (scale <= 1.05) {
+          resetTransform();
+        }
       }
     });
 
-    // 데스크톱 테스트용: 마우스 휠로도 확대/축소
+    overlay.addEventListener('touchcancel', function(e){
+      updateTouchState(e.touches);
+      if (activeTouches === 0) {
+        if (scale <= 1.05) {
+          resetTransform();
+        }
+      }
+    });
+
+    // 데스크톱 테스트용: 마우스 휠로 마우스 포인터 중심 확대/축소
     overlay.addEventListener('wheel', function(e){
       e.preventDefault();
-      scale = clamp(scale + (e.deltaY < 0 ? 0.15 : -0.15), MIN_SCALE, MAX_SCALE);
-      applyTransform();
+      var mouseX = e.clientX;
+      var mouseY = e.clientY;
+      var C_x = window.innerWidth / 2;
+      var C_y = window.innerHeight / 2;
+      
+      var imageX = (mouseX - C_x - translateX) / scale;
+      var imageY = (mouseY - C_y - translateY) / scale;
+      
+      var newScale = clamp(scale + (e.deltaY < 0 ? 0.25 : -0.25), MIN_SCALE, MAX_SCALE);
+      
+      translateX = mouseX - C_x - imageX * newScale;
+      translateY = mouseY - C_y - imageY * newScale;
+      scale = newScale;
+      
+      if (scale <= 1.05) {
+        resetTransform();
+      } else {
+        applyTransform();
+      }
     }, { passive: false });
   })();
 </script>
@@ -316,7 +390,7 @@
     const VENUE_NAME = 'KIMIN HALL (김인홀)';
     
     // 네이버 클라우드 플랫폼에서 발급받은 Client ID(ncpKeyId)를 여기에 입력하세요.
-    const CLIENT_ID = 'YOUR_NAVER_CLIENT_ID'; 
+    const CLIENT_ID = 'xolpeuem3a'; 
 
     const mapContainer = document.getElementById(MAP_CONTAINER_ID);
     if (!mapContainer) return;
