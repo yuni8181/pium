@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>2026 대전국제기타페스티벌 | DIGF</title>
+<!-- 카카오톡 / SNS 공유 (Open Graph) 설정 -->
+<meta property="og:title" content="2026 대전국제기타페스티벌">
+<meta property="og:description" content="2026. 09. 04. (금) 오후 7시 30분 ...">
+<meta property="og:image" content="https://yuni8181.github.io/img/main_001.jpeg">
+<meta property="og:url" content="https://yuni8181.github.io/">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -47,6 +53,13 @@
     <div class="slide" data-src="img/main_012.jpeg" data-label="12 · 오프닝 스냅"></div>
     <!-- 13 : 주최/후원 안내 (Detail 직전 마지막 컷) -->
     <div class="slide" data-src="img/main_013.jpeg" data-label="13 · 주최 · 후원"></div>
+  </div>
+
+  <!-- ================= 이미지 확대 뷰어 (핀치 줌) ================= -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="닫기">✕</button>
+    <img id="lightboxImg" src="" alt="">
+    <div class="lightbox-hint">손가락으로 확대 · 드래그로 이동 · 두 번 탭하여 확대/축소</div>
   </div>
 
   <!-- ================= 공연 정보 카드 ================= -->
@@ -189,6 +202,109 @@
     };
     img.src = src;
   });
+</script>
+
+<script>
+  // 이미지 확대 뷰어: 갤러리 이미지를 탭하면 열리고, 핀치/휠로 확대, 드래그로 이동 가능
+  (function(){
+    var gallery = document.getElementById('gallery');
+    var overlay = document.getElementById('lightbox');
+    var img = document.getElementById('lightboxImg');
+    var closeBtn = document.getElementById('lightboxClose');
+
+    var MIN_SCALE = 1, MAX_SCALE = 4, DOUBLE_TAP_SCALE = 2.2;
+    var scale = 1, originX = 0, originY = 0;
+    var startDist = 0, startScale = 1;
+    var isPanning = false, panStartX = 0, panStartY = 0, originStartX = 0, originStartY = 0;
+    var lastTapTime = 0;
+
+    function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
+    function dist(t0, t1){
+      var dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    function applyTransform(){
+      img.style.transform = 'translate(' + originX + 'px,' + originY + 'px) scale(' + scale + ')';
+    }
+    function resetTransform(){
+      scale = 1; originX = 0; originY = 0;
+      applyTransform();
+    }
+    function openLightbox(src, alt){
+      img.src = src;
+      img.alt = alt || '';
+      resetTransform();
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(){
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+      img.src = '';
+    }
+
+    gallery.addEventListener('click', function(e){
+      if (e.target.tagName === 'IMG') {
+        openLightbox(e.target.src, e.target.alt);
+      }
+    });
+    closeBtn.addEventListener('click', closeLightbox);
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) closeLightbox();
+    });
+
+    overlay.addEventListener('touchstart', function(e){
+      if (e.touches.length === 2) {
+        startDist = dist(e.touches[0], e.touches[1]);
+        startScale = scale;
+        isPanning = false;
+      } else if (e.touches.length === 1) {
+        var now = Date.now();
+        if (now - lastTapTime < 300) {
+          lastTapTime = 0;
+          scale > 1 ? resetTransform() : (scale = DOUBLE_TAP_SCALE, applyTransform());
+          return;
+        }
+        lastTapTime = now;
+
+        if (scale > 1) {
+          isPanning = true;
+          panStartX = e.touches[0].clientX;
+          panStartY = e.touches[0].clientY;
+          originStartX = originX;
+          originStartY = originY;
+        }
+      }
+    }, { passive: true });
+
+    overlay.addEventListener('touchmove', function(e){
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var d = dist(e.touches[0], e.touches[1]);
+        scale = clamp(startScale * (d / startDist), MIN_SCALE, MAX_SCALE);
+        applyTransform();
+      } else if (e.touches.length === 1 && isPanning) {
+        e.preventDefault();
+        originX = originStartX + (e.touches[0].clientX - panStartX);
+        originY = originStartY + (e.touches[0].clientY - panStartY);
+        applyTransform();
+      }
+    }, { passive: false });
+
+    overlay.addEventListener('touchend', function(e){
+      if (e.touches.length === 0) {
+        isPanning = false;
+        if (scale <= 1) resetTransform();
+      }
+    });
+
+    // 데스크톱 테스트용: 마우스 휠로도 확대/축소
+    overlay.addEventListener('wheel', function(e){
+      e.preventDefault();
+      scale = clamp(scale + (e.deltaY < 0 ? 0.15 : -0.15), MIN_SCALE, MAX_SCALE);
+      applyTransform();
+    }, { passive: false });
+  })();
 </script>
 
 <script>
