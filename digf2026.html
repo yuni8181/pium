@@ -12,6 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -117,7 +118,7 @@
     <!-- ================= 장소 · 지도 ================= -->
     <div class="section-title">오시는 길</div>
     <div class="venue-card">
-      <iframe src="https://maps.google.com/maps?q=대전광역시%20유성구%20북유성대로%2093%20유성선병원&t=&z=16&ie=UTF8&iwloc=&output=embed" class="venue-map" style="border:0; width:100%; display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div id="map" class="venue-map"></div>
       <div class="venue-body">
         <div class="venue-name">KIMIN HALL (김인홀)</div>
         <div class="venue-addr">대전광역시 유성구 북유성대로 93<br>유성선병원 지하 3층</div>
@@ -381,6 +382,42 @@
   })();
 </script>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  // 지도 초기화 (Leaflet.js 사용 - API 키 불필요, 로컬 파일 환경 완벽 지원)
+  (function() {
+    const MAP_CONTAINER_ID = 'map';
+    const LATITUDE = 36.375836;    // 대전 유성선병원 위도
+    const LONGITUDE = 127.319717;  // 대전 유성선병원 경도
+    const VENUE_NAME = 'KIMIN HALL (김인홀)';
 
+    const mapContainer = document.getElementById(MAP_CONTAINER_ID);
+    if (!mapContainer) return;
+
+    // 지도 생성
+    const map = L.map(MAP_CONTAINER_ID, {
+      center: [LATITUDE, LONGITUDE],
+      zoom: 16,
+      zoomControl: true,
+      dragging: !L.Browser.mobile, // 모바일에서 터치 스크롤 방해 방지
+      tap: !L.Browser.mobile
+    });
+
+    // OpenStreetMap 레이어 추가
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // 마커 추가
+    const marker = L.marker([LATITUDE, LONGITUDE]).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family: 'Noto Sans KR', sans-serif; padding: 2px; line-height: 1.4;">
+        <b style="font-size: 13px; color: #3F2560;">${VENUE_NAME}</b><br>
+        <span style="font-size: 11px; color: #6E6379;">유성선병원 지하 3층</span>
+      </div>
+    `).openPopup();
+  })();
+</script>
 </body>
 </html>
