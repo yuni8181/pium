@@ -474,11 +474,12 @@ button {
   margin: 40px 0 20px;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr) !important;
   gap: 16px;
 }
 
-.quick-card {
+.quick-card,
+.quick-nav a {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -494,7 +495,8 @@ button {
   position: relative;
 }
 
-.quick-card:hover {
+.quick-card:hover,
+.quick-nav a:hover {
   transform: translateY(-5px);
   box-shadow: 0 14px 32px rgba(5, 156, 139, 0.14), 0 2px 8px rgba(0, 0, 0, 0.03);
   border-color: rgba(5, 156, 139, 0.28);
@@ -520,10 +522,11 @@ button {
   white-space: nowrap;
 }
 
-.quick-icon-badge {
+.quick-icon-badge,
+.quick-icon {
   align-self: flex-end;
-  width: 38px;
-  height: 38px;
+  width: 38px !important;
+  height: 38px !important;
   border-radius: 50%;
   background: rgba(5, 156, 139, 0.08);
   color: #059c8b;
@@ -532,16 +535,23 @@ button {
   justify-content: center;
   transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
   flex-shrink: 0;
+  padding: 0 !important;
 }
 
-.quick-icon-badge svg {
-  width: 20px;
-  height: 20px;
+.quick-icon-badge svg,
+.quick-icon svg,
+.quick-nav svg {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
   display: block;
+  flex-shrink: 0;
   transition: transform 0.25s ease;
 }
 
-.quick-card:hover .quick-icon-badge {
+.quick-card:hover .quick-icon-badge,
+.quick-nav a:hover .quick-icon {
   background: #059c8b;
   color: #ffffff;
   transform: scale(1.08);
@@ -1194,7 +1204,7 @@ button {
 
 /* ---------- responsive ---------- */
 
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .quick-nav {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
