@@ -68,6 +68,155 @@
   const EVENTS = loadEventsFromStorage();
 
   /* =========================================================
+     1-B. Hero 3-Column Poster Showcase (Auto-scroll Animation)
+     ========================================================= */
+  (function initPosterShowcase() {
+    const showcase = document.getElementById("heroPosterShowcase");
+    const colLeft   = document.getElementById("posterColLeft");
+    const colCenter = document.getElementById("posterColCenter");
+    const colRight  = document.getElementById("posterColRight");
+    if (!showcase || !colLeft || !colCenter || !colRight) return;
+
+    // img/poster/ 폴더 고정 이미지만 사용 (관리자 등록 공연 제외)
+    const allPosters = [
+      "img/poster/poster_001.jpg",
+      "img/poster/poster_002.jpg",
+      "img/poster/poster_003.jpg",
+      "img/poster/poster_004.jpg",
+      "img/poster/poster_005.jpg",
+      "img/poster/poster_006.jpg",
+      "img/poster/poster_007.jpg",
+      "img/poster/poster_008.jpg",
+      "img/poster/poster_009.jpg",
+      "img/poster/poster_010.jpg",
+      "img/poster/poster_011.jpg",
+      "img/poster/poster_012.jpg",
+      "img/poster/poster_013.jpg",
+      "img/poster/poster_014.jpg",
+      "img/poster/poster_015.jpg",
+      "img/poster/poster_016.jpg",
+      "img/poster/poster_020.jpg"
+    ];
+
+    // Distribute posters across 3 columns
+    const colA = [], colB = [], colC = [];
+    allPosters.forEach((src, i) => {
+      if (i % 3 === 0) colA.push(src);
+      else if (i % 3 === 1) colB.push(src);
+      else colC.push(src);
+    });
+
+    // Ensure minimum 4 per column by cycling
+    function padCol(arr) {
+      const min = 5;
+      while (arr.length < min) arr.push(...arr);
+      return arr;
+    }
+
+    function buildTrack(col, posters, altDir) {
+      const track = document.createElement("div");
+      track.className = "col-track";
+
+      // Duplicate for seamless loop
+      const doubled = [...posters, ...posters];
+      doubled.forEach(src => {
+        const card = document.createElement("div");
+        card.className = "poster-card";
+        card.setAttribute("role", "img");
+        card.setAttribute("aria-label", "공연 포스터");
+
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "공연 포스터";
+        img.loading = "lazy";
+        img.decoding = "async";
+
+        card.appendChild(img);
+        track.appendChild(card);
+      });
+
+      col.appendChild(track);
+      return track;
+    }
+
+    const trackLeft   = buildTrack(colLeft,   padCol([...colA]), false);
+    const trackCenter = buildTrack(colCenter,  padCol([...colB]), true);
+    const trackRight  = buildTrack(colRight,   padCol([...colC]), false);
+
+    // Animation state
+    const SPEED = 0.45; // px per frame
+    let posLeft   = 0;
+    let posCenter = 0;
+    let posRight  = 0;
+    let paused = false;
+    let rafId = null;
+
+    function getTrackHeight(track) {
+      const cards = track.children;
+      if (!cards.length) return 0;
+      // Height of ONE set = half the total children
+      const half = Math.floor(cards.length / 2);
+      let h = 0;
+      for (let i = 0; i < half; i++) {
+        const rect = cards[i].getBoundingClientRect();
+        h += rect.height + 14; // 14px gap
+      }
+      return h;
+    }
+
+    function animate() {
+      if (!paused) {
+        posLeft   += SPEED;
+        posCenter += SPEED;  // 가운데는 반대 방향(아래로)
+        posRight  += SPEED;
+
+        const hL = getTrackHeight(trackLeft);
+        const hC = getTrackHeight(trackCenter);
+        const hR = getTrackHeight(trackRight);
+
+        if (hL > 0 && posLeft   >= hL) posLeft   -= hL;
+        if (hC > 0 && posCenter >= hC) posCenter -= hC;  // 루프 리셋
+        if (hR > 0 && posRight  >= hR) posRight  -= hR;
+
+        trackLeft.style.transform   = `translateY(-${posLeft}px)`;          // 위로↑
+        trackCenter.style.transform = `translateY(${posCenter - hC}px)`;    // 아래로↓
+        trackRight.style.transform  = `translateY(-${posRight}px)`;         // 위로↑
+      }
+      rafId = requestAnimationFrame(animate);
+    }
+
+    // Pause on hover
+    showcase.addEventListener("mouseenter", () => { paused = true; });
+    showcase.addEventListener("mouseleave", () => { paused = false; });
+
+    // Parallax tilt on mouse move (desktop only)
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      showcase.addEventListener("mousemove", (e) => {
+        const rect = showcase.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+        showcase.style.transform = `rotateY(${dx * 4}deg) rotateX(${-dy * 3}deg)`;
+      });
+      showcase.addEventListener("mouseleave", () => {
+        showcase.style.transform = "";
+      });
+    }
+
+    // Start animation after images begin loading
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // 가운데 열: 중간 지점에서 시작 (아래로 스크롤)
+        const hC = getTrackHeight(trackCenter);
+        posCenter = hC / 2;  // 절반 지점에서 시작
+        trackCenter.style.transform = `translateY(${posCenter - hC}px)`;
+        animate();
+      });
+    });
+  })();
+
+  /* =========================================================
      2. Calendar & Event Mouse Toast Tooltip
      ========================================================= */
   const calendarDays = document.getElementById("calendarDays");
@@ -528,8 +677,12 @@
 
     chipOptions.forEach((btn) => {
       btn.addEventListener("click", () => {
-        chipOptions.forEach((b) => b.classList.remove("active"));
+        chipOptions.forEach((b) => {
+          b.classList.remove("active");
+          b.setAttribute("aria-pressed", "false");
+        });
         btn.classList.add("active");
+        btn.setAttribute("aria-pressed", "true");
         if (eventTypeInput) eventTypeInput.value = btn.dataset.value;
       });
     });
@@ -598,7 +751,7 @@
     const modalDesc = document.getElementById("modalDesc");
     const modalChips = document.getElementById("modalChips");
     const modalBookingBtn = document.getElementById("modalBookingBtn");
-    const modalCloseBtn = document.getElementById("modalCloseBtn");
+    const modalCloseBtn = document.getElementById("modalClose") || document.getElementById("modalCloseBtn");
 
     function openEventModal(eventObj) {
       if (!eventObj) return;

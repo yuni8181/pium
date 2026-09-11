@@ -305,6 +305,16 @@ button {
   color: #037367;
 }
 
+/* 모바일: 전화 버튼 표시 / 데스크탑 버튼 숨김 */
+.header-cta--desktop { display: none; }
+.header-cta--mobile  { display: inline-flex; }
+
+/* 데스크탑(1024px+): 전화 버튼 숨기고 폼 버튼 표시 */
+@media (min-width: 1024px) {
+  .header-cta--mobile  { display: none; }
+  .header-cta--desktop { display: inline-flex; }
+}
+
 /* ---------- hero ---------- */
 
 .hero {
@@ -318,7 +328,7 @@ button {
   padding-top: 24px;
   padding-bottom: 24px;
   text-align: center;
-  overflow: hidden;
+  overflow: hidden;   /* poster showcase 여기서 클립 */
   box-sizing: border-box;
 }
 
@@ -415,7 +425,7 @@ button {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(228, 233, 226, 0.8);
     border-radius: var(--radius-m);
-    padding: 8px;
+    padding: 4px;  /* 8px → 4px 로 줄여 컬럼 공간 확보 */
   }
 }
 
@@ -1003,10 +1013,17 @@ button {
   font-weight: 600;
 }
 
-.chip-option[aria-pressed="true"] {
+.chip-option[aria-pressed="true"],
+.chip-option.active {
   background: var(--brand-soft);
   border-color: var(--brand);
   color: var(--brand-dark);
+}
+
+.chip-option:hover {
+  border-color: var(--brand);
+  color: var(--brand-dark);
+  cursor: pointer;
 }
 
 .agree {
@@ -1204,29 +1221,33 @@ button {
 
 /* ---------- responsive ---------- */
 
+/* 모바일 기본 gutter 축소 (767px 이하) */
 @media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+  }
+
   .quick-nav {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin: 28px auto 16px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin: 20px 0 12px;
     width: 100%;
-    justify-items: center;
-    align-items: center;
   }
 
   .quick-card {
     height: auto;
-    padding: 10px 4px;
+    min-width: 0;
+    padding: 8px 2px;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
-    gap: 8px;
+    gap: 5px;
     width: 100%;
   }
 
@@ -1235,71 +1256,91 @@ button {
     box-shadow: none !important;
   }
 
-  .quick-title {
-    font-size: 0.74rem;
-    font-weight: 600;
-    color: var(--ink-soft);
-    text-align: center;
-    line-height: 1.25;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-  }
-
-  .quick-title small {
-    font-size: 0.64rem;
-    color: var(--ink-faint);
-    margin-top: 2px;
-    display: block;
-    white-space: nowrap;
-  }
-
+  /* 모바일에서 아이콘 먼저, 텍스트 아래 */
   .quick-icon-badge {
+    order: -1;
     align-self: center;
     margin: 0 auto;
-    width: 44px;
-    height: 44px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 50%;
-    background: rgba(5, 156, 139, 0.08);
+    background: rgba(5, 156, 139, 0.10);
     color: #059c8b;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    padding: 0 !important;
   }
 
   .quick-icon-badge svg {
-    width: 21px;
-    height: 21px;
+    width: 17px !important;
+    height: 17px !important;
+    max-width: 17px !important;
+    max-height: 17px !important;
+  }
+
+  .quick-title {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    white-space: normal;
+    word-break: keep-all;
+    width: 100%;
+    /* ★ overflow 제거 — 텍스트 절대 잘리지 않음 */
+  }
+
+  .quick-title small {
+    display: none; /* 모바일에선 서브텍스트 숨김 */
   }
 }
 
 @media (max-width: 480px) {
   .quick-nav {
-    gap: 6px;
+    gap: 4px;
   }
 
   .quick-card {
-    padding: 8px 2px;
+    padding: 8px 1px;
   }
 
   .quick-title {
-    font-size: 0.68rem;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-  }
-
-  .quick-title small {
-    font-size: 0.58rem;
-    white-space: nowrap;
+    font-size: 0.62rem;
+    letter-spacing: -0.04em;
   }
 
   .quick-icon-badge {
-    width: 40px;
-    height: 40px;
+    width: 34px !important;
+    height: 34px !important;
   }
 
   .quick-icon-badge svg {
-    width: 19px;
-    height: 19px;
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+  }
+}
+
+/* 아주 작은 화면(360px 이하) */
+@media (max-width: 360px) {
+  .quick-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .quick-title {
+    font-size: 0.58rem;
+  }
+
+  .quick-icon-badge {
+    width: 30px !important;
+    height: 30px !important;
   }
 }
 
@@ -1435,7 +1476,7 @@ button {
 
 @media (max-width: 380px) {
   :root {
-    --gutter: 36px;
+    --gutter: 12px;
   }
 
   .hero h1 {

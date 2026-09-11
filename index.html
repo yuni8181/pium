@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="css/style.css?v=1.0.3">
+  <link rel="stylesheet" href="css/style.css?v=1.0.8">
 </head>
 
 <body>
@@ -24,7 +24,9 @@
       <a href="#inquiry">공연 의뢰</a>
       <a href="#channels">채널</a>
     </nav>
-    <a href="#inquiry" class="btn btn-small btn-filled">문의하기</a>
+    <!-- 모바일: 전화 바로연결 / 데스크탑: 문의 폼으로 이동 -->
+    <a href="tel:010-3399-0221" class="btn btn-small btn-filled header-cta header-cta--mobile" aria-label="전화 문의하기 010-3399-0221">문의하기</a>
+    <a href="#inquiry" class="btn btn-small btn-filled header-cta header-cta--desktop">문의하기</a>
   </header>
 
   <main id="top">
@@ -58,10 +60,8 @@
             <div class="quick-icon-badge">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
-                <path d="M3 6l6-3 6 3 6-3v13l-6 3-6-3-6 3V6z" />
-                <path d="M9 3v13M15 6v13" />
-                <circle cx="16.5" cy="15.5" r="3.5" />
-                <path d="M19 18l2 2" />
+                <path d="M12 3L3 9v12h6v-6h6v6h6V9z" />
+                <circle cx="12" cy="8" r="2" />
               </svg>
             </div>
           </a>
@@ -166,7 +166,7 @@
           <button type="button" class="cal-arrow" id="cardNext" aria-label="다음 공연">
             <svg viewBox="0 0 24 24">
               <path d="M9 5l7 7-7 7" />
-            </svg>~~
+            </svg>
           </button>
         </div>
       </div>
