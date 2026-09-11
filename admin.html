@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pium Planning Admin · 피움 관리자 페이지</title>
+  <meta name="description" content="공연기획사 피움 관리자 시스템 — 공연 등록/수정/삭제 및 외부 의뢰 문의 관리">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/admin.css?v=1.0.0">
+</head>
+
+<body>
+
+  <!-- ===== 1. Auth View Container (Login) ===== -->
+  <div id="authContainer" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">PIUM ADMIN</div>
+        <h1 class="auth-title">관리자 로그인</h1>
+        <p class="auth-subtitle">Pium Planning 공연 및 의뢰 문의 관리 시스템</p>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">이메일 주소</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="admin@piumplanning.kr" value="admin@piumplanning.kr" required>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">비밀번호</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" value="pium1234" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>로그인</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <div class="auth-hint">
+          💡 데모 로그인 테스트 정보<br>
+          아이디: <code>admin@piumplanning.kr</code> / 비밀번호: <code>pium1234</code>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 2. Main Admin Dashboard Application ===== -->
+  <div id="adminApp" class="admin-app" style="display: none;">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">P</div>
+        <div class="sidebar-title">PIUM ADMIN</div>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li>
+          <a href="#" class="sidebar-link active" data-tab="performance">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>공연 관리</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="sidebar-link" data-tab="inquiry">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <span>의뢰 문의 관리</span>
+            <span class="badge-count" id="sidebarInqBadge">0</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">P</div>
+          <div class="user-details">
+            <span class="user-name">Pium 담당자</span>
+            <span class="user-role">최고 관리자</span>
+          </div>
+        </div>
+        <button type="button" id="logoutBtn" class="btn-icon" title="로그아웃">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <h1 class="header-title" id="headerTitle">공연 관리</h1>
+        <div class="header-actions">
+          <a href="index.html" target="_blank" class="btn btn-secondary btn-sm" title="랜딩페이지 바로가기">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            <span>랜딩페이지 확인</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Content Body -->
+      <div class="content-body">
+
+        <!-- Stat Cards Row -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-info">
+              <span class="stat-label">등록된 총 공연</span>
+              <span class="stat-value" id="statTotalPerf">0</span>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-info">
+              <span class="stat-label">진행 예정/진행중 공연</span>
+              <span class="stat-value" id="statUpcomingPerf">0</span>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-info">
+              <span class="stat-label">신규 접수 문의</span>
+              <span class="stat-value" id="statNewInq">0</span>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 1: Performance Management Tab -->
+        <section id="performanceSection" class="tab-section">
+          <div class="view-card">
+            <div class="view-header">
+              <div class="view-title-group">
+                <h2 class="view-title">공연 목록 및 등록</h2>
+                
+                <!-- Filter Tabs -->
+                <div class="filter-tabs" id="perfFilterTabs">
+                  <button type="button" class="tab-btn active" data-filter="all">전체</button>
+                  <button type="button" class="tab-btn" data-filter="upcoming">진행예정</button>
+                  <button type="button" class="tab-btn" data-filter="ongoing">진행중</button>
+                  <button type="button" class="tab-btn" data-filter="ended">종료</button>
+                </div>
+              </div>
+
+              <div class="header-actions">
+                <div class="search-box">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" id="perfSearchInput" placeholder="공연 제목 / 장소 검색...">
+                </div>
+
+                <button type="button" id="openPerfModalBtn" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>공연 등록</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Performance Data Table -->
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>공연 정보</th>
+                    <th>공연 기간</th>
+                    <th>상태</th>
+                    <th>예매 상태</th>
+                    <th>예매 오픈일시</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody id="perfTableBody">
+                  <!-- JS Rendered Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="perfEmptyState" class="empty-state" style="display: none;">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <p>등록된 공연 정보가 없거나 조건에 맞는 공연이 없습니다.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Inquiry Management Tab -->
+        <section id="inquirySection" class="tab-section" style="display: none;">
+          <div class="view-card">
+            <div class="view-header">
+              <div class="view-title-group">
+                <h2 class="view-title">공연 의뢰 문의 내역</h2>
+
+                <div class="filter-tabs" id="inqFilterTabs">
+                  <button type="button" class="tab-btn active" data-filter="all">전체 문의</button>
+                  <button type="button" class="tab-btn" data-filter="new">신규 접수</button>
+                  <button type="button" class="tab-btn" data-filter="done">처리 완료</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inquiry Data Table -->
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>문의자 / 연락처</th>
+                    <th>공연 유형</th>
+                    <th>희망 일정</th>
+                    <th>접수 상태</th>
+                    <th>접수 일시</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody id="inqTableBody">
+                  <!-- JS Rendered Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="inqEmptyState" class="empty-state" style="display: none;">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </div>
+              <p>접수된 의뢰 문의 내역이 없습니다.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 3. Performance Create/Edit Modal ===== -->
+  <div id="perfModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="perfModalTitle">신규 공연 등록</h3>
+        <button type="button" class="modal-close" id="perfModalClose">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="perfForm">
+        <input type="hidden" id="perfId">
+        <input type="hidden" id="posterUrlInput">
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="perfTitle" class="form-label">공연 제목 *</label>
+            <input type="text" id="perfTitle" class="form-control" placeholder="예: 르 그랑 클라비어 — 거장의 대화" required>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="perfStartDate" class="form-label">시작일 *</label>
+              <input type="date" id="perfStartDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="perfEndDate" class="form-label">종료일 (단일 공연일 시 동일)</label>
+              <input type="date" id="perfEndDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="perfLocation" class="form-label">공연 장소 / 회차 *</label>
+            <input type="text" id="perfLocation" class="form-control" placeholder="예: 대전예술의전당 아트홀 · 1회 (19:30)" required>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="perfStatus" class="form-label">공연 진행 상태 *</label>
+              <select id="perfStatus" class="form-control">
+                <option value="upcoming">진행예정 (Upcoming)</option>
+                <option value="ongoing">진행중 (Ongoing)</option>
+                <option value="ended">종료 (Ended)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="perfTicketStatus" class="form-label">티켓 예매 상태 *</label>
+              <select id="perfTicketStatus" class="form-control">
+                <option value="예매중">예매중</option>
+                <option value="예매예정">예매예정</option>
+                <option value="마감">마감</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="perfOpenDate" class="form-label">예매 오픈 일시</label>
+              <input type="text" id="perfOpenDate" class="form-control" placeholder="YYYY-MM-DD HH:mm (예: 2026-09-20 10:00)">
+            </div>
+            <div class="form-group">
+              <label for="perfTicketUrl" class="form-label">외부 예매 사이트 URL</label>
+              <input type="url" id="perfTicketUrl" class="form-control" placeholder="https://ticket.interpark.com/...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="perfDescription" class="form-label">공연 소개 및 상세 내용</label>
+            <textarea id="perfDescription" class="form-control" placeholder="공연 프로그램, 출연진 및 소개글을 입력하세요."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">포스터 이미지 업로드</label>
+            <div class="upload-zone" onclick="document.getElementById('posterInput').click();">
+              <div class="upload-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <p>클릭하거나 포스터 이미지 파일을 이곳으로 드래그하세요</p>
+              <span class="item-subtitle">(JPG, PNG 이미지 파일)</span>
+              <input type="file" id="posterInput" accept="image/*" style="display: none;">
+              <img id="posterPreview" class="upload-preview" style="display: none;" alt="포스터 미리보기">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="perfModalCancel">취소</button>
+          <button type="submit" class="btn btn-primary">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 4. Inquiry Detail Modal ===== -->
+  <div id="inqModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">공연 의뢰 문의 상세 내역</h3>
+        <button type="button" class="modal-close" id="inqModalClose">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-box">
+          <div class="detail-row">
+            <span class="detail-label">문의자명:</span>
+            <span class="detail-val" id="inqDetailName">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">연락처/이메일:</span>
+            <span class="detail-val" id="inqDetailContact">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">공연 유형:</span>
+            <span class="detail-val" id="inqDetailType">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">희망 일정:</span>
+            <span class="detail-val" id="inqDetailDate">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">접수 일시:</span>
+            <span class="detail-val" id="inqDetailCreated">-</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">문의 내용</label>
+          <div class="form-control" style="background: var(--surface-alt); min-height: 120px; white-space: pre-wrap;" id="inqDetailMessage">-</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="inqModalCloseBtn">닫기</button>
+        <button type="button" class="btn btn-primary" id="inqModalStatusBtn">처리 완료로 변경</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js?v=1.0.0"></script>
+</body>
+
+</html>
